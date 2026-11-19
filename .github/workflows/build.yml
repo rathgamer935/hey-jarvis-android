@@ -38,6 +38,7 @@ jobs:
                   gradlePluginPortal()
               }
           }
+
           dependencyResolutionManagement {
               repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
               repositories {
@@ -46,6 +47,7 @@ jobs:
                   maven { url = uri("https://jitpack.io") }
               }
           }
+
           rootProject.name = "HeyJarvis"
           include(":app")
           EOF
@@ -66,12 +68,22 @@ jobs:
           android {
               namespace = "com.jarvis.wakeword"
               compileSdk = 35
+
               defaultConfig {
                   applicationId = "com.jarvis.wakeword"
                   minSdk = 26
                   targetSdk = 35
                   versionCode = 1
                   versionName = "1.0"
+              }
+
+              compileOptions {
+                  sourceCompatibility = JavaVersion.VERSION_17
+                  targetCompatibility = JavaVersion.VERSION_17
+              }
+
+              kotlinOptions {
+                  jvmTarget = "17"
               }
           }
 
@@ -80,20 +92,26 @@ jobs:
           }
           EOF
 
+          echo "android.useAndroidX=true" > gradle.properties
+
           cat > app/src/main/AndroidManifest.xml <<'EOF'
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
               <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
               <application
                   android:theme="@android:style/Theme.Material.Light.NoActionBar"
                   android:label="Hey Jarvis"
                   android:allowBackup="false">
+
                   <activity
                       android:name=".MainActivity"
                       android:exported="true">
+
                       <intent-filter>
                           <action android:name="android.intent.action.MAIN" />
                           <category android:name="android.intent.category.LAUNCHER" />
                       </intent-filter>
+
                   </activity>
               </application>
           </manifest>
@@ -165,12 +183,14 @@ jobs:
 
                       detector?.start { score ->
                           if (score >= 0.5f) {
-                              status.text = "JARVIS DETECTED!"
-                              Toast.makeText(
-                                  this,
-                                  "Hey Jarvis detected!",
-                                  Toast.LENGTH_SHORT
-                              ).show()
+                              runOnUiThread {
+                                  status.text = "JARVIS DETECTED!"
+                                  Toast.makeText(
+                                      this,
+                                      "Hey Jarvis detected!",
+                                      Toast.LENGTH_SHORT
+                                  ).show()
+                              }
                           }
                       }
 
@@ -199,7 +219,11 @@ jobs:
                   permissions: Array<out String>,
                   grantResults: IntArray
               ) {
-                  super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+                  super.onRequestPermissionsResult(
+                      requestCode,
+                      permissions,
+                      grantResults
+                  )
 
                   if (requestCode == 10 && grantResults.isNotEmpty()
                       && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -208,8 +232,6 @@ jobs:
               }
           }
           EOF
-
-          echo "android.useAndroidX=true" > gradle.properties
 
       - name: Build APK
         run: gradle --no-daemon assembleDebug
