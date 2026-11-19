@@ -1,7 +1,11 @@
+
 name: Build Hey Jarvis APK
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
   build:
@@ -16,6 +20,11 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
 
       - name: Create Android project
         run: |
@@ -103,7 +112,7 @@ jobs:
           import android.content.pm.PackageManager
           import android.Manifest
           import android.widget.Toast
-          import com.msnilsen.openwakeword.OpenWakeWord
+          import com.openwakeword.OpenWakeWord
 
           class MainActivity : Activity() {
               private var detector: OpenWakeWord? = null
@@ -141,6 +150,8 @@ jobs:
               }
 
               private fun startListening() {
+                  if (detector != null) return
+
                   if (checkSelfPermission(Manifest.permission.RECORD_AUDIO)
                       != PackageManager.PERMISSION_GRANTED) {
                       requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), 10)
@@ -154,16 +165,21 @@ jobs:
                           .build()
 
                       detector?.start { score ->
-                          runOnUiThread {
-                              if (score >= 0.5f) {
-                                  status.text = "JARVIS DETECTED!"
-                                  Toast.makeText(this, "Hey Jarvis detected!", Toast.LENGTH_SHORT).show()
-                              }
+                          if (score >= 0.5f) {
+                              status.text = "JARVIS DETECTED!"
+                              Toast.makeText(
+                                  this,
+                                  "Hey Jarvis detected!",
+                                  Toast.LENGTH_SHORT
+                              ).show()
                           }
                       }
+
                       status.text = "Listening for Hey Jarvis..."
                   } catch (e: Exception) {
                       status.text = "Error: ${e.message}"
+                      detector?.release()
+                      detector = null
                   }
               }
 
