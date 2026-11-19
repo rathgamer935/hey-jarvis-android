@@ -66,7 +66,6 @@ jobs:
           android {
               namespace = "com.jarvis.wakeword"
               compileSdk = 35
-
               defaultConfig {
                   applicationId = "com.jarvis.wakeword"
                   minSdk = 26
@@ -201,6 +200,7 @@ jobs:
                   grantResults: IntArray
               ) {
                   super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
                   if (requestCode == 10 && grantResults.isNotEmpty()
                       && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                       startListening()
@@ -208,6 +208,8 @@ jobs:
               }
           }
           EOF
+
+          echo "android.useAndroidX=true" > gradle.properties
 
       - name: Build APK
         run: gradle --no-daemon assembleDebug
